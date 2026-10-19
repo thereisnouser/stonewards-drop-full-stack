@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <Version>0.1.0</Version>
+    <FileVersion>0.1.0.0</FileVersion>
+    <AssemblyName>StonewardsDropFullStack</AssemblyName>
+    <RootNamespace>StonewardsDropFullStack</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <GameDir Condition="'$(GameDir)' == ''">$(STONEWARDS_GAME_DIR)</GameDir>
+    <ManagedDir>$(GameDir)\StoneWards_Data\Managed</ManagedDir>
+    <BepInExCoreDir Condition="'$(BepInExCoreDir)' == ''">$(GameDir)\BepInEx\core</BepInExCoreDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="BepInEx"><HintPath>$(BepInExCoreDir)\BepInEx.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="0Harmony"><HintPath>$(BepInExCoreDir)\0Harmony.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Assembly-CSharp"><HintPath>$(ManagedDir)\Assembly-CSharp.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Mirror"><HintPath>$(ManagedDir)\Mirror.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine"><HintPath>$(ManagedDir)\UnityEngine.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.CoreModule"><HintPath>$(ManagedDir)\UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+  <Target Name="ValidateLocalDependencies" BeforeTargets="ResolveReferences">
+    <Error Condition="'$(GameDir)' == ''" Text="Specify -p:GameDir=... or set STONEWARDS_GAME_DIR." />
+    <Error Condition="!Exists('$(ManagedDir)\Assembly-CSharp.dll')" Text="Missing game DLL: $(ManagedDir)\Assembly-CSharp.dll" />
+    <Error Condition="!Exists('$(BepInExCoreDir)\BepInEx.dll')" Text="Missing BepInEx 5: $(BepInExCoreDir)\BepInEx.dll" />
+    <Error Condition="!Exists('$(BepInExCoreDir)\0Harmony.dll')" Text="Missing Harmony: $(BepInExCoreDir)\0Harmony.dll" />
+  </Target>
+</Project>
