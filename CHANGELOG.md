@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.2 (slot/count argument fix)
+
+- Corrected the native `CmdReleaseItem` argument order: `itemId, slot, count` instead of `itemId, count, slot`.
+- Updated Harmony prefix to modify the fourth native argument (`count`) while preserving the third (`slot`).
+- Corrected client-side inventory lookup and server diagnostic labels.
+- Investigated the observed log: `STONE count=5 slot=1` was mislabelled and actually means slot 5, count 1.
+- **Test build:** verify that the host receives the full quantity and that dropped item counts match the inventory delta.
+
 ## 0.1.1 (diagnostic test)
 
 - Expand any positive native release request smaller than the selected stack (not only requests of exactly one item).

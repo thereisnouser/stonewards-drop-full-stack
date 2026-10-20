@@ -10,7 +10,7 @@
 - Suppresses duplicate bulk-drop commands while the local client still reports the same unchanged slot (up to five seconds).
 - An optional `Enabled` setting restores the vanilla action without uninstalling the plugin.
 
-> **Testing status:** v0.1.1 is an unverified diagnostic update after v0.1.0 was reported to drop single items. It has not yet been compiled against the current game's assemblies or tested in multiplayer. In particular, confirm the game host accepts requests for multiple items. Do not publish a prebuilt release before testing.
+> **Testing status:** v0.1.2 fixes the reversed slot/count arguments discovered in the v0.1.1 log. It remains an unverified test update. It has not yet been compiled against the current game's assemblies or tested in multiplayer. In particular, confirm the game host accepts requests for multiple items. Do not publish a prebuilt release before testing.
 
 ## Install from source
 
@@ -59,7 +59,7 @@ After building and launching through the correct r2modman profile, press R **onc
 Select-String -Path "$env:APPDATA\r2modmanPlus-local\Stonewards\profiles\stonewards-drop-full-stack\BepInEx\LogOutput.log" -Pattern '\[DropFullStack\]'
 ```
 
-The expected messages are `client CmdReleaseItem hook active` and `CLIENT release ... EXPANDED`. If none appear, confirm the installed DLL and the launched mod profile. If the hook loads but no `CLIENT release` message appears on pressing R, the R action uses a different game path. If `EXPANDED` is logged but the world still receives one item, host-side handling needs inspection. On a local host, the optional `SERVER incoming release` entry records the actual incoming command count.
+The expected messages are `client CmdReleaseItem hook active` and `CLIENT release ... EXPANDED: item=STONE slot=5 count=1 -> 5` (example values). If none appear, confirm the installed DLL and the launched mod profile. If the hook loads but no `CLIENT release` message appears on pressing R, the R action uses a different game path. If `EXPANDED` is logged but the world still receives one item, host-side handling needs inspection. The first two `int` parameters are interpreted as `slot, count` (previously incorrectly read as `count, slot`). On a local host, the optional `SERVER incoming release` entry records the actual incoming command count.
 
 **Important:** Avoid testing large/valuable stacks until the quantity of items remaining in inventory and spawned on the ground has been confirmed. Do not infer successful bulk dropping from an `EXPANDED` log alone.
 

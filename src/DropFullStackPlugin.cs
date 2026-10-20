@@ -14,7 +14,7 @@ namespace StonewardsDropFullStack
     {
         public const string PluginGuid = "thereisnouser.stonewards.dropfullstack";
         public const string PluginName = "Stonewards Drop Full Stack";
-        public const string PluginVersion = "0.1.1";
+        public const string PluginVersion = "0.1.2";
 
         private const float PendingTimeoutSeconds = 5f;
         private const int MaxDiagnosticMessages = 30;
@@ -103,14 +103,14 @@ namespace StonewardsDropFullStack
         }
 
         // Harmony index aliases refer to the native command's parameters.
-        // __0 = owner, __1 = item ID, __2 = requested amount, __3 = slot.
+        // __0 = owner, __1 = item ID, __2 = selected inventory slot, __3 = requested amount.
         // Do not replace the command: only alter the amount sent by the game.
         private static bool BeforeRelease(
             FirstPersonController __instance,
             FirstPersonController __0,
             string __1,
-            ref int __2,
-            int __3)
+            int __2,
+            ref int __3)
         {
             int call = ++_clientCalls;
             try
@@ -131,13 +131,13 @@ namespace StonewardsDropFullStack
                 bool ownerLocal = __0 != null && __0.isLocalPlayer;
                 if (!instanceLocal && !ownerLocal)
                 {
-                    Diagnostic(call, "not local: instanceLocal=false ownerLocal=false; requested=" + __2);
+                    Diagnostic(call, "not local: instanceLocal=false ownerLocal=false; requested=" + __3);
                     return true;
                 }
 
-                if (__2 <= 0 || string.IsNullOrEmpty(__1))
+                if (__3 <= 0 || string.IsNullOrEmpty(__1))
                 {
-                    Diagnostic(call, "empty/invalid request; count=" + __2 +
+                    Diagnostic(call, "empty/invalid request; count=" + __3 +
                         " item=" + (__1 ?? "<null>"));
                     return true;
                 }
@@ -146,34 +146,34 @@ namespace StonewardsDropFullStack
                 var inventory = player.InventorySystem;
                 if (inventory == null)
                 {
-                    Diagnostic(call, "inventory missing; item=" + __1 + " slot=" + __3);
+                    Diagnostic(call, "inventory missing; item=" + __1 + " slot=" + __2);
                     return true;
                 }
-                if (__3 < 0 || __3 >= inventory.InventoryEntries.Count)
+                if (__2 < 0 || __2 >= inventory.InventoryEntries.Count)
                 {
-                    Diagnostic(call, "invalid slot=" + __3 + " totalSlots=" +
+                    Diagnostic(call, "invalid slot=" + __2 + " totalSlots=" +
                         inventory.InventoryEntries.Count + " item=" + __1);
                     return true;
                 }
 
-                var entry = inventory.InventoryEntries[__3];
+                var entry = inventory.InventoryEntries[__2];
                 if (!string.Equals(entry.itemID, __1, StringComparison.Ordinal))
                 {
                     Diagnostic(call, "slot item mismatch: requested=" + __1 +
-                        " actual=" + (entry.itemID ?? "<null>") + " slot=" + __3);
+                        " actual=" + (entry.itemID ?? "<null>") + " slot=" + __2);
                     return true;
                 }
 
                 int held = entry.count;
-                int originalCount = __2;
+                int originalCount = __3;
                 if (held <= 0 || originalCount >= held)
                 {
                     Diagnostic(call, "no expansion needed: item=" + __1 +
-                        " slot=" + __3 + " requested=" + originalCount + " held=" + held);
+                        " slot=" + __2 + " requested=" + originalCount + " held=" + held);
                     return true;
                 }
 
-                long key = ((long)(uint)player.GetInstanceID() << 32) | (uint)__3;
+                long key = ((long)(uint)player.GetInstanceID() << 32) | (uint)__2;
                 float now = Time.unscaledTime;
 
                 if (Pending.TryGetValue(key, out var pending))
@@ -182,23 +182,24 @@ namespace StonewardsDropFullStack
                         string.Equals(pending.ItemId, __1, StringComparison.Ordinal))
                     {
                         Diagnostic(call, "duplicate suppressed: item=" + __1 +
-                            " slot=" + __3 + " held=" + held);
+                            " slot=" + __2 + " held=" + held);
                         return false;
                     }
                     Pending.Remove(key);
                 }
 
-                // v0.1.0 only expanded requests for exactly 1 item and silently
-                // returned on mismatched owner/slot. Expand all positive requests
-                // below the real slot count and log each decision for debugging.
-                __2 = held;
+                // The native command takes (owner, itemId, slot, count, position).
+                // Previous builds reversed the two int arguments: when dropping
+                // STONE from slot 5 with count=1, they inspected slot 1 (HORN).
+                // Change ONLY the requested count, preserving the slot index.
+                __3 = held;
                 Pending[key] = new PendingDrop
                 {
                     ItemId = __1,
                     Count = held,
                     ExpiresAt = now + PendingTimeoutSeconds
                 };
-                Diagnostic(call, "EXPANDED: item=" + __1 + " slot=" + __3 +
+                Diagnostic(call, "EXPANDED: item=" + __1 + " slot=" + __2 +
                     " count=" + originalCount + " -> " + held);
                 return true;
             }
@@ -220,9 +221,9 @@ namespace StonewardsDropFullStack
             {
                 string item = __args != null && __args.Length > 1
                     ? __args[1] as string : null;
-                object count = __args != null && __args.Length > 2
+                object slot = __args != null && __args.Length > 2
                     ? __args[2] : null;
-                object slot = __args != null && __args.Length > 3
+                object count = __args != null && __args.Length > 3
                     ? __args[3] : null;
                 _log?.LogInfo("[DropFullStack] SERVER incoming release #" + call +
                     ": item=" + (item ?? "<null>") +
