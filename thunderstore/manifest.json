@@ -1,0 +1,9 @@
+{
+  "name": "DropFullStack",
+  "version_number": "0.1.0",
+  "website_url": "https://github.com/thereisnouser/stonewards-drop-full-stack",
+  "description": "Drop the entire selected item stack with one press of the normal Release key.",
+  "dependencies": [
+    "BepInEx-BepInExPack-5.4.2305"
+  ]
+}

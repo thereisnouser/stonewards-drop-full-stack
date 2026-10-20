@@ -1,7 +1,8 @@
 bin/
 obj/
+dist/
+.vs/
 *.user
 *.suo
-.vs/
 Local.props
 *.zip
