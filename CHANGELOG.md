@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.1 (diagnostic test)
+
+- Expand any positive native release request smaller than the selected stack (not only requests of exactly one item).
+- Remove an unnecessary instance/owner identity check and preserve local-player authorization.
+- Log why release requests are skipped, the selected slot/count, and successful expansions.
+- Add read-only host-side diagnostics for the native Mirror server handler, when present.
+- Preserve native fallback on patch errors and the duplicate-request guard.
+
 ## 0.1.0
 
 - Initial source release.

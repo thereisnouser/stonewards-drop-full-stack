@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using BepInEx;
 using BepInEx.Configuration;
+using BepInEx.Logging;
 using HarmonyLib;
 using UnityEngine;
 
@@ -13,12 +14,10 @@ namespace StonewardsDropFullStack
     {
         public const string PluginGuid = "thereisnouser.stonewards.dropfullstack";
         public const string PluginName = "Stonewards Drop Full Stack";
-        public const string PluginVersion = "0.1.0";
+        public const string PluginVersion = "0.1.1";
 
-        // A client may still display the old inventory count while the server processes
-        // the first request. Refuse repeat bulk drops of the same unchanged slot.
-        // A time limit prevents a stuck lock if a server never acknowledges the drop.
         private const float PendingTimeoutSeconds = 5f;
+        private const int MaxDiagnosticMessages = 30;
 
         private sealed class PendingDrop
         {
@@ -31,59 +30,81 @@ namespace StonewardsDropFullStack
             new Dictionary<long, PendingDrop>();
 
         private static ConfigEntry<bool> _enabled;
+        private static ManualLogSource _log;
+        private static int _clientCalls;
+        private static int _serverCalls;
         private Harmony _harmony;
         private float _nextCleanup;
 
         private void Awake()
         {
+            _log = Logger;
             _enabled = Config.Bind("General", "Enabled", true,
-                "Replace the normal one-item drop with a drop of the entire selected inventory slot.");
+                "Drop the complete selected inventory stack with the normal drop button.");
 
-            MethodInfo target = AccessTools.Method(typeof(FirstPersonController), "CmdReleaseItem");
-            if (target == null)
+            _harmony = new Harmony(PluginGuid);
+            var command = AccessTools.Method(typeof(FirstPersonController), "CmdReleaseItem");
+            if (!HasExpectedSignature(command))
             {
-                Logger.LogError("Drop Full Stack disabled: FirstPersonController.CmdReleaseItem not found.");
-                return;
-            }
-
-            // Verified against known Stonewards mod usage. If an update changes
-            // this command, do not blindly patch the wrong arguments.
-            ParameterInfo[] p = target.GetParameters();
-            if (p.Length != 5 ||
-                p[0].ParameterType != typeof(FirstPersonController) ||
-                p[1].ParameterType != typeof(string) ||
-                p[2].ParameterType != typeof(int) ||
-                p[3].ParameterType != typeof(int) ||
-                p[4].ParameterType != typeof(Vector3))
-            {
-                Logger.LogError("Drop Full Stack disabled: CmdReleaseItem signature changed.");
+                Logger.LogError("[DropFullStack] CmdReleaseItem is missing or its arguments changed. Patch disabled.");
                 return;
             }
 
             try
             {
-                _harmony = new Harmony(PluginGuid);
-                MethodInfo prefix = AccessTools.Method(typeof(DropFullStackPlugin), nameof(BeforeRelease));
-                _harmony.Patch(target, prefix: new HarmonyMethod(prefix));
-                Logger.LogInfo("Drop Full Stack v" + PluginVersion + " active. Normal drop now releases a complete slot.");
-            }
-            catch (Exception error)
-            {
-                Logger.LogError("Drop Full Stack patch failed: " + error);
-                if (_harmony != null)
+                _harmony.Patch(
+                    command,
+                    prefix: new HarmonyMethod(
+                        AccessTools.Method(typeof(DropFullStackPlugin), nameof(BeforeRelease))));
+
+                Logger.LogInfo("[DropFullStack] v" + PluginVersion +
+                    " client CmdReleaseItem hook active. Enabled=" + _enabled.Value);
+
+                // Observe the server's native handler without altering it.
+                // This distinguishes a client-side mismatch from a server-side
+                // restriction (the game may ignore bulk counts when spawning).
+                var candidates = typeof(FirstPersonController).GetMethods(
+                    BindingFlags.Instance | BindingFlags.Static |
+                    BindingFlags.Public | BindingFlags.NonPublic);
+                int hookedServerHandlers = 0;
+                foreach (var candidate in candidates)
                 {
-                    _harmony.UnpatchSelf();
-                    _harmony = null;
+                    if (!candidate.Name.StartsWith("UserCode_CmdReleaseItem", StringComparison.Ordinal) ||
+                        !HasExpectedSignature(candidate))
+                        continue;
+
+                    _harmony.Patch(
+                        candidate,
+                        prefix: new HarmonyMethod(
+                            AccessTools.Method(typeof(DropFullStackPlugin), nameof(ObserveServerRelease))));
+                    hookedServerHandlers++;
                 }
+                Logger.LogInfo("[DropFullStack] Server release handlers instrumented: " +
+                    hookedServerHandlers + " (diagnostics only).");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("[DropFullStack] Failed to install patch: " + ex);
+                _harmony.UnpatchSelf();
             }
         }
 
-        // Harmony positional argument names avoid dependency on parameter names
-        // in the game's DLL:
-        // __0 = player, __1 = itemId, __2 = count, __3 = selected slot,
-        // __4 = drop position (unchanged).
-        // Patch the CLIENT command wrapper, not the server UserCode or an inventory
-        // removal function. The game remains authoritative over actual removal.
+        private static bool HasExpectedSignature(MethodInfo method)
+        {
+            if (method == null)
+                return false;
+            var p = method.GetParameters();
+            return p.Length == 5 &&
+                p[0].ParameterType == typeof(FirstPersonController) &&
+                p[1].ParameterType == typeof(string) &&
+                p[2].ParameterType == typeof(int) &&
+                p[3].ParameterType == typeof(int) &&
+                p[4].ParameterType == typeof(Vector3);
+        }
+
+        // Harmony index aliases refer to the native command's parameters.
+        // __0 = owner, __1 = item ID, __2 = requested amount, __3 = slot.
+        // Do not replace the command: only alter the amount sent by the game.
         private static bool BeforeRelease(
             FirstPersonController __instance,
             FirstPersonController __0,
@@ -91,72 +112,142 @@ namespace StonewardsDropFullStack
             ref int __2,
             int __3)
         {
+            int call = ++_clientCalls;
             try
             {
-                if (_enabled == null || !_enabled.Value ||
-                    __instance == null || !__instance.isLocalPlayer ||
-                    !ReferenceEquals(__0, __instance) ||
-                    __2 != 1 || string.IsNullOrEmpty(__1))
+                if (_enabled == null || !_enabled.Value)
+                {
+                    Diagnostic(call, "disabled; vanilla drop preserved");
                     return true;
+                }
 
-                var inventory = __instance.InventorySystem;
-                if (inventory == null ||
-                    __3 < 0 || __3 >= inventory.InventoryEntries.Count)
+                if (__instance == null)
+                {
+                    Diagnostic(call, "no command instance");
                     return true;
+                }
+
+                bool instanceLocal = __instance.isLocalPlayer;
+                bool ownerLocal = __0 != null && __0.isLocalPlayer;
+                if (!instanceLocal && !ownerLocal)
+                {
+                    Diagnostic(call, "not local: instanceLocal=false ownerLocal=false; requested=" + __2);
+                    return true;
+                }
+
+                if (__2 <= 0 || string.IsNullOrEmpty(__1))
+                {
+                    Diagnostic(call, "empty/invalid request; count=" + __2 +
+                        " item=" + (__1 ?? "<null>"));
+                    return true;
+                }
+
+                FirstPersonController player = __0 != null ? __0 : __instance;
+                var inventory = player.InventorySystem;
+                if (inventory == null)
+                {
+                    Diagnostic(call, "inventory missing; item=" + __1 + " slot=" + __3);
+                    return true;
+                }
+                if (__3 < 0 || __3 >= inventory.InventoryEntries.Count)
+                {
+                    Diagnostic(call, "invalid slot=" + __3 + " totalSlots=" +
+                        inventory.InventoryEntries.Count + " item=" + __1);
+                    return true;
+                }
 
                 var entry = inventory.InventoryEntries[__3];
-                if (!string.Equals(entry.itemID, __1, StringComparison.Ordinal) ||
-                    entry.count <= 0)
+                if (!string.Equals(entry.itemID, __1, StringComparison.Ordinal))
+                {
+                    Diagnostic(call, "slot item mismatch: requested=" + __1 +
+                        " actual=" + (entry.itemID ?? "<null>") + " slot=" + __3);
                     return true;
+                }
 
-                long key = ((long)(uint)__instance.GetInstanceID() << 32) | (uint)__3;
-                int count = entry.count;
+                int held = entry.count;
+                int originalCount = __2;
+                if (held <= 0 || originalCount >= held)
+                {
+                    Diagnostic(call, "no expansion needed: item=" + __1 +
+                        " slot=" + __3 + " requested=" + originalCount + " held=" + held);
+                    return true;
+                }
+
+                long key = ((long)(uint)player.GetInstanceID() << 32) | (uint)__3;
                 float now = Time.unscaledTime;
 
                 if (Pending.TryGetValue(key, out var pending))
                 {
-                    if (now < pending.ExpiresAt &&
-                        pending.Count == count &&
+                    if (now < pending.ExpiresAt && pending.Count == held &&
                         string.Equals(pending.ItemId, __1, StringComparison.Ordinal))
                     {
-                        // No server inventory change yet. Avoid issuing a second
-                        // identical command using the still-stale client stack.
+                        Diagnostic(call, "duplicate suppressed: item=" + __1 +
+                            " slot=" + __3 + " held=" + held);
                         return false;
                     }
                     Pending.Remove(key);
                 }
 
-                if (count <= 1)
-                    return true; // Single items behave exactly as in vanilla.
-
-                // This is the only gameplay change: the existing Mirror command
-                // sends a server-validated drop request for the complete slot.
-                __2 = count;
+                // v0.1.0 only expanded requests for exactly 1 item and silently
+                // returned on mismatched owner/slot. Expand all positive requests
+                // below the real slot count and log each decision for debugging.
+                __2 = held;
                 Pending[key] = new PendingDrop
                 {
                     ItemId = __1,
-                    Count = count,
+                    Count = held,
                     ExpiresAt = now + PendingTimeoutSeconds
                 };
+                Diagnostic(call, "EXPANDED: item=" + __1 + " slot=" + __3 +
+                    " count=" + originalCount + " -> " + held);
                 return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // A mod must not break the vanilla drop action if a game update
-                // changes the inventory data model unexpectedly.
-                return true;
+                Diagnostic(call, "ERROR: " + ex);
+                return true; // On failure preserve the game's native action.
             }
+        }
+
+        // Instrumentation only. Running on a host, this reveals the count which
+        // reached Mirror's server handler, without changing server behavior.
+        private static void ObserveServerRelease(object[] __args)
+        {
+            int call = ++_serverCalls;
+            if (call > MaxDiagnosticMessages)
+                return;
+            try
+            {
+                string item = __args != null && __args.Length > 1
+                    ? __args[1] as string : null;
+                object count = __args != null && __args.Length > 2
+                    ? __args[2] : null;
+                object slot = __args != null && __args.Length > 3
+                    ? __args[3] : null;
+                _log?.LogInfo("[DropFullStack] SERVER incoming release #" + call +
+                    ": item=" + (item ?? "<null>") +
+                    " count=" + (count?.ToString() ?? "<null>") +
+                    " slot=" + (slot?.ToString() ?? "<null>"));
+            }
+            catch (Exception ex)
+            {
+                _log?.LogWarning("[DropFullStack] Server diagnostic failed: " + ex.Message);
+            }
+        }
+
+        private static void Diagnostic(int call, string message)
+        {
+            if (call <= MaxDiagnosticMessages)
+                _log?.LogInfo("[DropFullStack] CLIENT release #" + call + ": " + message);
         }
 
         private void Update()
         {
             if (Time.unscaledTime < _nextCleanup)
                 return;
-
             _nextCleanup = Time.unscaledTime + 10f;
             if (Pending.Count == 0)
                 return;
-
             var expired = new List<long>();
             foreach (var item in Pending)
             {
@@ -169,8 +260,7 @@ namespace StonewardsDropFullStack
 
         private void OnDestroy()
         {
-            if (_harmony != null)
-                _harmony.UnpatchSelf();
+            _harmony?.UnpatchSelf();
             Pending.Clear();
         }
     }
