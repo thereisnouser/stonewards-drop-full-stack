@@ -26,8 +26,8 @@ Install with **r2modman** or another compatible Thunderstore mod manager, then l
 ## 🔧 Compatibility
 
 - **Game:** Stonewards; full-stack dropping was tested locally on an October 2026 game build.
-- **Mod loader:** BepInEx 5; version 5.4.23.5 was used in the local test.
-- **Multiplayer:** tested in a locally hosted game. Operation on an unmodded remote host has not been verified.
+- **Mod loader:** BepInEx 5 (BepInExPack 5.4.2305 declared as a dependency).
+- **Multiplayer:** full-stack dropping was tested in local gameplay. Operation on an unmodded remote host has not been verified.
 
 ## ⚠️ Known limitations
 
@@ -35,7 +35,7 @@ Compatibility with other players' hosts is not yet confirmed.
 
 ## 🔗 Links
 
-[GitHub](https://github.com/thereisnouser/stonewards-drop-full-stack) · [Report an issue](https://github.com/thereisnouser/stonewards-drop-full-stack/issues) · [Changelog](https://github.com/thereisnouser/stonewards-drop-full-stack/blob/release/0.1.0/CHANGELOG.md)
+[GitHub](https://github.com/thereisnouser/stonewards-drop-full-stack) · [Report an issue](https://github.com/thereisnouser/stonewards-drop-full-stack/issues) · [Changelog](https://github.com/thereisnouser/stonewards-drop-full-stack/blob/release/0.1.1/CHANGELOG.md)
 
 ---
 

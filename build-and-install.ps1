@@ -27,7 +27,7 @@ if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
 }
 
 $project = Join-Path $PSScriptRoot 'StonewardsDropFullStack.csproj'
-Write-Host 'Building Stonewards Drop Full Stack 0.1.0...'
+Write-Host 'Building Stonewards Drop Full Stack 0.1.1...'
 & dotnet build $project --configuration Release "-p:GameDir=$game" "-p:BepInExCoreDir=$core"
 if ($LASTEXITCODE -ne 0) {
     throw 'Build failed. The mod was NOT installed.'

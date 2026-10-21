@@ -39,7 +39,7 @@ if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
 
 $manifest = Get-Content -LiteralPath (Join-Path $store 'manifest.json') -Raw | ConvertFrom-Json
 $version = [string]$manifest.version_number
-if ($manifest.name -cne 'DropFullStack' -or $version -ne '0.1.0') {
+if ($manifest.name -cne 'DropFullStack' -or $version -ne '0.1.1') {
     throw 'Unexpected manifest name or version.'
 }
 $code = Get-Content -LiteralPath $plugin -Raw

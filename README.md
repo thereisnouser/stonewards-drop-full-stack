@@ -32,7 +32,7 @@ Set `Enabled = false` to restore the standard one-item drop.
 
 ### Mod manager
 
-Once the package is published on Thunderstore, install it using **r2modman** or another compatible Thunderstore mod manager. Launch Stonewards through the mod manager. The package manifest declares **BepInExPack** as a dependency.
+Install the published package using **r2modman** or another compatible Thunderstore mod manager. Launch Stonewards through the mod manager. The package manifest declares **BepInExPack** as a dependency.
 
 ### Build from source
 
@@ -51,8 +51,8 @@ For local testing, use an r2modman profile named `stonewards-drop-full-stack`, m
 ## 🔧 Compatibility
 
 - **Game:** Stonewards; the full-stack behavior was tested locally on an October 2026 game build.
-- **Mod loader:** BepInEx 5; version 5.4.23.5 was used in the local test.
-- **Multiplayer:** tested in a locally hosted game. The plugin modifies the local player's native release request; behavior on a remote host without the mod has not been verified.
+- **Mod loader:** BepInEx 5 (the package declares BepInExPack 5.4.2305 as a dependency).
+- **Multiplayer:** the full-stack action was tested in local gameplay. The plugin modifies the local player's native release request; behavior on a remote host without the mod has not been verified.
 
 ## ⚠️ Known limitations
 
@@ -77,7 +77,7 @@ The repository also includes `package-thunderstore.ps1`:
   -ProfileDir '<r2modman profile directory>'
 ```
 
-It builds the plugin and creates `dist/DropFullStack-0.1.0.zip` with the DLL, `thunderstore/README.md`, changelog, manifest, and 256×256 icon. The script checks package contents and matching source/package versions.
+It builds the plugin and creates `dist/DropFullStack-0.1.1.zip` with the DLL, `thunderstore/README.md`, changelog, manifest, and 256×256 icon. The script checks package contents and matching source/package versions.
 
 ## 🔗 Links
 
