@@ -1,40 +1,41 @@
 # Stonewards Drop Full Stack
 
-**Drop your entire selected item stack with one press of the normal Release key.** No additional keybind or menu is needed.
+**Drop the entire stack from your selected inventory slot with a single press of the normal Release key.** No extra keybind or separate menu is needed.
 
 ## ✨ Features
 
-- **Full-stack drops** — release all items from the selected inventory slot at once.
-- **Native controls** — uses Stonewards' original Release action and drop position.
-- **Duplicate protection** — helps prevent repeated requests while the inventory is still synchronizing.
+- **Full-stack drop** — release every item in the selected slot in one action.
+- **Native controls** — keeps your existing Release key and the game's normal drop position.
+- **Repeat-request protection** — prevents duplicate full-stack requests while the inventory is synchronizing.
+- **Optional toggle** — switch back to the original one-item drop without uninstalling the mod.
 
 ## 🎮 How to use
 
-Select a stack and press **Release** (normally **R**). The entire stack is dropped instead of a single item.
+Select a stack and press **Release** (**R** in the tested keyboard setup). The whole selected stack is dropped instead of a single item. A slot with only one item behaves normally.
 
 ## ⚙️ Configuration
 
-The mod is enabled by default. To restore the original one-item drop, set `Enabled = false` in:
+Enabled by default. To restore the original one-item drop, set `Enabled = false` in:
 
 `BepInEx/config/thereisnouser.stonewards.dropfullstack.cfg`
 
 ## 📦 Installation
 
-Install with **r2modman** or a compatible Thunderstore mod manager and start Stonewards from your mod manager. BepInEx is listed as a package dependency.
+Install with **r2modman** or another compatible Thunderstore mod manager, then launch Stonewards through the manager. The package declares **BepInExPack** as a dependency.
 
 ## 🔧 Compatibility
 
-- **Game:** Stonewards (tested on an October 2026 game build).
-- **Mod loader:** BepInEx 5.4.23.5 used during testing.
-- **Multiplayer:** the mod changes the local player's release request. Behavior on unmodded remote hosts has not yet been confirmed.
+- **Game:** Stonewards; full-stack dropping was tested locally on an October 2026 game build.
+- **Mod loader:** BepInEx 5; version 5.4.23.5 was used in the local test.
+- **Multiplayer:** tested in a locally hosted game. Operation on an unmodded remote host has not been verified.
 
 ## ⚠️ Known limitations
 
-Bulk dropping on other players' hosts remains unverified.
+Compatibility with other players' hosts is not yet confirmed.
 
 ## 🔗 Links
 
-[GitHub](https://github.com/thereisnouser/stonewards-drop-full-stack) · [Report an issue](https://github.com/thereisnouser/stonewards-drop-full-stack/issues) · [Changelog](https://github.com/thereisnouser/stonewards-drop-full-stack/blob/main/CHANGELOG.md)
+[GitHub](https://github.com/thereisnouser/stonewards-drop-full-stack) · [Report an issue](https://github.com/thereisnouser/stonewards-drop-full-stack/issues) · [Changelog](https://github.com/thereisnouser/stonewards-drop-full-stack/blob/release/0.1.0/CHANGELOG.md)
 
 ---
 

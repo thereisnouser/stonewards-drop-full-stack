@@ -1,75 +1,87 @@
 # Stonewards Drop Full Stack
 
-**Drop your entire selected item stack with one press of the normal Release key.** No additional keybind or menu is needed.
+**Drop the entire stack from your selected inventory slot with a single press of the normal Release key.** No extra keybind or separate menu is needed.
 
 ## ✨ Features
 
-- **One-press full-stack drop** — drops the full quantity from the selected inventory slot.
-- **Native controls** — keeps the game's Release key and original dropping location.
-- **Duplicate protection** — avoids immediately repeating a full-stack request while its inventory count is still awaiting synchronization.
-- **Optional toggle** — restores the usual one-item drop when disabled.
+- **Full-stack drop** — release all items in the selected slot at once instead of one at a time.
+- **Native controls** — uses the existing Release action and keeps the game's normal drop position.
+- **Repeat-request protection** — prevents duplicate full-stack requests while the same inventory count is still awaiting synchronization.
+- **Optional toggle** — disable the mod's behavior without uninstalling it.
 
 ## 🎮 How to use
 
-Select an item stack and press the game's **Release** key (normally **R**). Instead of one item, the entire selected stack is released.
+Select an inventory slot containing a stack, then press **Release** (**R** in the tested keyboard setup). The whole stack is dropped in one action. A slot containing only one item behaves as usual.
 
-A slot containing just one item is unchanged. The mod does not raise the maximum stack size.
+The mod uses your existing in-game Release binding; it does not add a new key or change item stack limits.
 
 ## ⚙️ Configuration
 
-After the first launch, edit `BepInEx/config/thereisnouser.stonewards.dropfullstack.cfg`:
+The mod is enabled by default. BepInEx creates the following configuration file after the plugin loads:
+
+`BepInEx/config/thereisnouser.stonewards.dropfullstack.cfg`
 
 ```ini
 [General]
 Enabled = true
 ```
 
-Set `Enabled = false` to restore the standard single-item drop. The key itself remains configured in Stonewards.
+Set `Enabled = false` to restore the standard one-item drop.
 
 ## 📦 Installation
 
-Install the package using **r2modman** or a compatible Thunderstore mod manager after it has been published, then start Stonewards through that manager. The manifest includes BepInEx as a dependency.
+### Mod manager
+
+Once the package is published on Thunderstore, install it using **r2modman** or another compatible Thunderstore mod manager. Launch Stonewards through the mod manager. The package manifest declares **BepInExPack** as a dependency.
 
 ### Build from source
 
-The source requires the **.NET SDK**, the installed Stonewards assemblies, and **BepInEx 5** in the active game or r2modman profile.
+You need the **.NET SDK**, Stonewards installed locally, and **BepInEx 5** installed in the game or selected r2modman profile.
+
+From the repository directory, run:
 
 ```powershell
-.\build-and-install.ps1 -GameDir '<Stonewards game directory>' -ProfileDir '<r2modman profile directory>'
+.\build-and-install.ps1 `
+  -GameDir '<Stonewards game directory>' `
+  -ProfileDir '<r2modman profile directory>'
 ```
 
-For local development, use an r2modman profile named `stonewards-drop-full-stack`, matching the GitHub repository.
+For local testing, use an r2modman profile named `stonewards-drop-full-stack`, matching this repository. If BepInEx is installed directly in the game directory, omit `-ProfileDir`.
 
 ## 🔧 Compatibility
 
-- **Game:** Stonewards (full-stack drop tested on the October 2026 game build).
-- **Mod loader:** BepInEx 5.4.23.5 used during testing.
-- **Multiplayer:** intercepts the local player's native release request. Operation while connected to an unmodded remote host still needs verification.
+- **Game:** Stonewards; the full-stack behavior was tested locally on an October 2026 game build.
+- **Mod loader:** BepInEx 5; version 5.4.23.5 was used in the local test.
+- **Multiplayer:** tested in a locally hosted game. The plugin modifies the local player's native release request; behavior on a remote host without the mod has not been verified.
 
 ## ⚠️ Known limitations
 
-- The behavior on other players' hosts has not yet been confirmed.
-- If Stonewards changes the native release command in a future update, the plugin disables its patch rather than guessing the new signature.
+- Compatibility with other players' hosts is not yet confirmed.
+- A future game update changing the native release method's signature may prevent the patch from loading.
 
 ## 🛠️ Development
 
 ### Implementation
 
-The plugin uses a Harmony prefix on `FirstPersonController.CmdReleaseItem` and changes **only its count parameter**, using the quantity in the selected inventory slot. The game's native command handles item removal and spawning.
+The plugin uses Harmony to intercept `FirstPersonController.CmdReleaseItem` and replaces its **count** argument with the number of items held in the selected slot. It leaves the item ID, slot index, drop position, and the game's native item handling unchanged.
 
-The correct argument order is `(owner, itemId, selectedSlot, count, position)`. Diagnostic-only hooks from early test builds are not included in the public source.
+Repeated requests for an unchanged stack are temporarily suppressed while inventory synchronization is pending. The plugin does not directly add or remove inventory items.
 
-Build a Thunderstore ZIP with:
+### Building a Thunderstore package
+
+The repository also includes `package-thunderstore.ps1`:
 
 ```powershell
-.\package-thunderstore.ps1 -GameDir '<Stonewards game directory>' -ProfileDir '<r2modman profile directory>'
+.\package-thunderstore.ps1 `
+  -GameDir '<Stonewards game directory>' `
+  -ProfileDir '<r2modman profile directory>'
 ```
 
-This validates matching version numbers and the icon size, then compiles and packages the real plugin DLL into `dist/`.
+It builds the plugin and creates `dist/DropFullStack-0.1.0.zip` with the DLL, `thunderstore/README.md`, changelog, manifest, and 256×256 icon. The script checks package contents and matching source/package versions.
 
 ## 🔗 Links
 
-[Issues](https://github.com/thereisnouser/stonewards-drop-full-stack/issues) · [Changelog](CHANGELOG.md)
+[Report an issue](https://github.com/thereisnouser/stonewards-drop-full-stack/issues) · [Changelog](CHANGELOG.md)
 
 ---
 
