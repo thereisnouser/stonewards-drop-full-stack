@@ -35,7 +35,7 @@ Compatibility with other players' hosts is not yet confirmed.
 
 ## 🔗 Links
 
-[GitHub](https://github.com/thereisnouser/stonewards-drop-full-stack) · [Report an issue](https://github.com/thereisnouser/stonewards-drop-full-stack/issues) · [Changelog](https://github.com/thereisnouser/stonewards-drop-full-stack/blob/release/0.1.1/CHANGELOG.md)
+[GitHub](https://github.com/thereisnouser/stonewards-drop-full-stack) · [Report an issue](https://github.com/thereisnouser/stonewards-drop-full-stack/issues) · [Changelog](https://github.com/thereisnouser/stonewards-drop-full-stack/blob/main/CHANGELOG.md)
 
 ---
 
