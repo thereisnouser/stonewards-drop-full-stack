@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.2
+
+- Updated the GitHub and Thunderstore descriptions to the current documentation standard.
+- Simplified installation and usage instructions and removed outdated standalone compatibility and limitation sections.
+- Synchronized plugin, project, manifest, and packaging versions for 0.1.2.
+- No gameplay changes; the tested full-stack drop behavior from 0.1.1 is unchanged.
+
 ## 0.1.1
 
 - Removed diagnostic-only hooks and verbose release logging from the public plugin.

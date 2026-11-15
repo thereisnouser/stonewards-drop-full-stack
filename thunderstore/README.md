@@ -1,17 +1,19 @@
 # Stonewards Drop Full Stack
 
-**Drop the entire stack from your selected inventory slot with a single press of the normal Release key.** No extra keybind or separate menu is needed.
+**Drop an entire stack from the selected inventory slot with one press of Stonewards' normal Release key.** No extra keybind or menu is needed.
 
 ## ✨ Features
 
-- **Full-stack drop** — release every item in the selected slot in one action.
-- **Native controls** — keeps your existing Release key and the game's normal drop position.
-- **Repeat-request protection** — prevents duplicate full-stack requests while the inventory is synchronizing.
-- **Optional toggle** — switch back to the original one-item drop without uninstalling the mod.
+- **Full-stack drops** — drop all items in the selected slot in a single action.
+- **Native controls** — use the existing Release action and the game's normal drop position.
+- **Duplicate-request protection** — suppress repeated requests for the same unchanged stack while inventory synchronization is pending.
+- **Optional toggle** — restore the original one-item drop through the configuration file.
 
 ## 🎮 How to use
 
-Select a stack and press **Release** (**R** in the tested keyboard setup). The whole selected stack is dropped instead of a single item. A slot with only one item behaves normally.
+Select an inventory slot containing a stack and press **Release** (**R** in the tested keyboard setup). The entire stack drops at once; a slot containing only one item behaves normally.
+
+The mod follows your existing in-game Release binding.
 
 ## ⚙️ Configuration
 
@@ -21,17 +23,7 @@ Enabled by default. To restore the original one-item drop, set `Enabled = false`
 
 ## 📦 Installation
 
-Install with **r2modman** or another compatible Thunderstore mod manager, then launch Stonewards through the manager. The package declares **BepInExPack** as a dependency.
-
-## 🔧 Compatibility
-
-- **Game:** Stonewards; full-stack dropping was tested locally on an October 2026 game build.
-- **Mod loader:** BepInEx 5 (BepInExPack 5.4.2305 declared as a dependency).
-- **Multiplayer:** full-stack dropping was tested in local gameplay. Operation on an unmodded remote host has not been verified.
-
-## ⚠️ Known limitations
-
-Compatibility with other players' hosts is not yet confirmed.
+Install with **r2modman** or another compatible Thunderstore mod manager, then launch Stonewards through the manager. **BepInExPack 5.4.2305** is declared as a package dependency.
 
 ## 🔗 Links
 

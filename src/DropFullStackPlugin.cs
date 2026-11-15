@@ -13,7 +13,7 @@ namespace StonewardsDropFullStack
     {
         public const string PluginGuid = "thereisnouser.stonewards.dropfullstack";
         public const string PluginName = "Stonewards Drop Full Stack";
-        public const string PluginVersion = "0.1.1";
+        public const string PluginVersion = "0.1.2";
 
         private const float PendingTimeoutSeconds = 5f;
 
